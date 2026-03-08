@@ -1,4 +1,4 @@
-import { ServerPolicy } from '@/common/policies/server.policy';
+import { ServerPolicy } from '@/features/common/policies/server.policy';
 import { DrizzleService } from '@/core/orm/drizzle.service';
 import { channels, messages } from '@/db';
 import {

@@ -6,8 +6,10 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { ZodValidationException } from 'nestjs-zod';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { ZodError } from 'zod';
 import { AsyncStorageService } from '../async-storage.service';
 
 @Injectable()
@@ -72,17 +74,22 @@ export class TransformInterceptor implements NestInterceptor {
           data: object,
         };
       }),
-      catchError((error: Error | HttpException) => {
+      catchError((error: unknown) => {
         const statusCode =
           error instanceof HttpException ? error.getStatus() : 500;
+
+        const zodIssues =
+          error instanceof ZodValidationException
+            ? (error.getZodError() as ZodError).issues
+            : undefined;
 
         return throwError(
           () =>
             new HttpException(
               {
                 ...getBasicResponse(statusCode),
-                message: error.message,
                 data: [],
+                ...(zodIssues && { errors: zodIssues }),
               },
               statusCode,
             ),

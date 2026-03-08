@@ -32,5 +32,5 @@ NestJS backend with PostgreSQL (Drizzle ORM) and Redis caching.
 - **Path aliases:** `@/*` maps to `src/*` (configured in tsconfig).
 - **Module resolution:** Uses `nodenext` module resolution — imports require explicit extensions in some contexts.
 - **Config:** Environment variables loaded via `@nestjs/config` with a typed config factory at `src/core/config/index.ts`.
-- **Swagger:** Available at `/docs` endpoint with Bearer auth support.
+- **Swagger:** Available at `/docs` endpoint with Bearer auth support. Every controller and endpoint **must** have complete Swagger metadata: `@ApiTags` on the controller, and `@ApiOperation` (summary + description), `@ApiResponse` (all relevant success and error status codes), `@ApiParam`, `@ApiQuery`, and `@ApiBody` on each endpoint as applicable. The Swagger UI should be fully self-documenting for API consumers.
 - **Authorization:** Do NOT use NestJS guards for resource-level access control (member/admin/owner checks). Instead, use injectable **policy services** in `src/common/policies/`, provided via `CommonModule`. Services inject the policy and call it at the start of each method (e.g. `this.serverPolicy.assertAdmin(userId, serverId)`). Controllers only use `JwtAuthGuard` for identity, then pass `userId` to the service layer.

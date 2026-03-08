@@ -13,11 +13,12 @@ async function bootstrap() {
   app.useLogger(app.get(LoggerService));
 
   const config = new DocumentBuilder()
-    .setTitle('Cats example')
-    .setDescription('The cats API description')
+    .setTitle('Discord Clone API')
+    .setDescription(
+      'REST API for a Discord-like chat platform with servers, channels, and messages',
+    )
     .setVersion('1.0')
     .addBearerAuth()
-    .addTag('cats')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, cleanupOpenApiDoc(documentFactory()));
