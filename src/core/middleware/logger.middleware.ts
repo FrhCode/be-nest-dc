@@ -6,10 +6,10 @@ import { LoggerService } from '../logger/logger.service';
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
   constructor(
-    // also inject LoggerService if needed
     private readonly logger: LoggerService,
     private readonly asyncStorage: AsyncStorageService,
   ) {}
+
   use(req: Request, res: Response, next: () => void) {
     const requestId = this.asyncStorage.get<string>('requestId') || 'N/A';
     this.logger.log(`[${requestId}] ${req.method} ${req.originalUrl}`, 'HTTP');

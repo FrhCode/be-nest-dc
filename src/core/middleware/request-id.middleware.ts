@@ -8,7 +8,7 @@ export class RequestIdMiddleware implements NestMiddleware {
   constructor(private readonly asyncStorage: AsyncStorageService) {}
 
   use(req: Request, res: Response, next: NextFunction) {
-    const requestId = randomUUID();
+    const requestId = (req.headers['x-request-id'] as string) || randomUUID();
     const store = { requestId, method: req.method, path: req.path };
 
     this.asyncStorage.run(store, () => {
