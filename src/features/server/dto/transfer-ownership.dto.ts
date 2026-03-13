@@ -5,4 +5,6 @@ const TransferOwnershipSchema = z.object({
   userId: z.number().int().positive(),
 });
 
-export class TransferOwnershipDto extends createZodDto(TransferOwnershipSchema) {}
+export class TransferOwnershipDto extends createZodDto(
+  TransferOwnershipSchema,
+) {}

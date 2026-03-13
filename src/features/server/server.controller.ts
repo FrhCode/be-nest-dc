@@ -27,6 +27,41 @@ import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 import { UpdateServerDto } from './dto/update-server.dto';
 import { ServerService } from './server.service';
+import {
+  swaggerErrorExample as errWrap,
+  swaggerExample as wrap,
+} from '@/core/swagger/swagger-example.helper';
+
+const EXAMPLE_SERVER = {
+  id: 1,
+  name: 'My Server',
+  iconUrl: 'https://example.com/icon.png',
+  inviteCode: 'abc123xyz',
+  ownerId: 1,
+  createdAt: '2026-03-13T10:00:00.000Z',
+  createdBy: 'john@example.com',
+  modifiedAt: '2026-03-13T10:00:00.000Z',
+  modifiedBy: 'john@example.com',
+};
+
+const EXAMPLE_CHANNEL = {
+  id: 1,
+  name: 'general',
+  type: 'message',
+  serverId: 1,
+  createdAt: '2026-03-13T10:00:00.000Z',
+  createdBy: 'john@example.com',
+  modifiedAt: '2026-03-13T10:00:00.000Z',
+  modifiedBy: 'john@example.com',
+};
+
+const EXAMPLE_MEMBER = {
+  id: 1,
+  userId: 1,
+  serverId: 1,
+  role: 'member',
+  createdAt: '2026-03-13T10:00:00.000Z',
+};
 
 @ApiTags('Servers')
 @ApiBearerAuth()
@@ -46,8 +81,20 @@ export class ServerController {
     description:
       'Creates a new server. The authenticated user becomes the owner and first member.',
   })
-  @ApiResponse({ status: 201, description: 'Server created.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Server created.',
+    content: {
+      'application/json': {
+        example: wrap(201, 'Created', EXAMPLE_SERVER),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
   create(@Req() req: AuthRequest, @Body() dto: CreateServerDto) {
     const user = this.getUser(req);
     return this.serverService.create(user.sub, user.email, dto);
@@ -58,8 +105,20 @@ export class ServerController {
     summary: 'List my servers',
     description: 'Returns all servers the authenticated user is a member of.',
   })
-  @ApiResponse({ status: 200, description: 'List of servers.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of servers.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', [EXAMPLE_SERVER]),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
   findAll(@Req() req: AuthRequest) {
     const user = this.getUser(req);
     return this.serverService.findUserServers(user.sub);
@@ -72,10 +131,35 @@ export class ServerController {
       'Returns server details including its channels. Requires membership.',
   })
   @ApiParam({ name: 'id', description: 'Server ID' })
-  @ApiResponse({ status: 200, description: 'Server details with channels.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Not a member of this server.' })
-  @ApiResponse({ status: 404, description: 'Server not found.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Server details with channels.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', {
+          ...EXAMPLE_SERVER,
+          channels: [EXAMPLE_CHANNEL],
+        }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Not a member of this server.',
+    content: { 'application/json': { example: errWrap(403, 'Forbidden') } },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Server not found.',
+    content: {
+      'application/json': { example: errWrap(404, 'Server not found') },
+    },
+  })
   findOne(@Req() req: AuthRequest, @Param('id', ParseIntPipe) id: number) {
     const user = this.getUser(req);
     return this.serverService.findOne(user.sub, id);
@@ -87,10 +171,32 @@ export class ServerController {
     description: 'Updates server name and/or icon. Requires admin role.',
   })
   @ApiParam({ name: 'id', description: 'Server ID' })
-  @ApiResponse({ status: 200, description: 'Server updated.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Admin role required.' })
-  @ApiResponse({ status: 404, description: 'Server not found.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Server updated.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', { ...EXAMPLE_SERVER, name: 'Updated Server' }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Admin role required.',
+    content: { 'application/json': { example: errWrap(403, 'Forbidden') } },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Server not found.',
+    content: {
+      'application/json': { example: errWrap(404, 'Server not found') },
+    },
+  })
   update(
     @Req() req: AuthRequest,
     @Param('id', ParseIntPipe) id: number,
@@ -106,10 +212,32 @@ export class ServerController {
     description: 'Permanently deletes a server. Requires owner role.',
   })
   @ApiParam({ name: 'id', description: 'Server ID' })
-  @ApiResponse({ status: 200, description: 'Server deleted.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Owner role required.' })
-  @ApiResponse({ status: 404, description: 'Server not found.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Server deleted.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', { success: true }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Owner role required.',
+    content: { 'application/json': { example: errWrap(403, 'Forbidden') } },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Server not found.',
+    content: {
+      'application/json': { example: errWrap(404, 'Server not found') },
+    },
+  })
   remove(@Req() req: AuthRequest, @Param('id', ParseIntPipe) id: number) {
     const user = this.getUser(req);
     return this.serverService.remove(user.sub, id);
@@ -120,10 +248,36 @@ export class ServerController {
     summary: 'Join a server',
     description: 'Joins a server using an invite code.',
   })
-  @ApiResponse({ status: 201, description: 'Joined server successfully.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 404, description: 'Invalid invite code.' })
-  @ApiResponse({ status: 409, description: 'Already a member.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Joined server successfully.',
+    content: {
+      'application/json': {
+        example: wrap(201, 'Created', { success: true, serverId: 1 }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Invalid invite code.',
+    content: {
+      'application/json': { example: errWrap(404, 'Invalid invite code') },
+    },
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Already a member.',
+    content: {
+      'application/json': {
+        example: errWrap(409, 'Already a member of this server'),
+      },
+    },
+  })
   join(@Req() req: AuthRequest, @Body() dto: JoinServerDto) {
     const user = this.getUser(req);
     return this.serverService.join(user.sub, dto.inviteCode);
@@ -136,11 +290,28 @@ export class ServerController {
       'Leaves a server. The owner cannot leave without transferring ownership first.',
   })
   @ApiParam({ name: 'id', description: 'Server ID' })
-  @ApiResponse({ status: 200, description: 'Left server.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Left server.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', { success: true }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
   @ApiResponse({
     status: 403,
     description: 'Owner must transfer ownership before leaving.',
+    content: {
+      'application/json': {
+        example: errWrap(403, 'Owner must transfer ownership before leaving'),
+      },
+    },
   })
   leave(@Req() req: AuthRequest, @Param('id', ParseIntPipe) id: number) {
     const user = this.getUser(req);
@@ -150,14 +321,35 @@ export class ServerController {
   @Post(':id/invite')
   @ApiOperation({
     summary: 'Invite a user',
-    description:
-      'Adds a user to the server by user ID. Requires admin role.',
+    description: 'Adds a user to the server by user ID. Requires admin role.',
   })
   @ApiParam({ name: 'id', description: 'Server ID' })
-  @ApiResponse({ status: 201, description: 'User invited.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Admin role required.' })
-  @ApiResponse({ status: 404, description: 'User or server not found.' })
+  @ApiResponse({
+    status: 201,
+    description: 'User invited.',
+    content: {
+      'application/json': {
+        example: wrap(201, 'Created', { success: true }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Admin role required.',
+    content: { 'application/json': { example: errWrap(403, 'Forbidden') } },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User or server not found.',
+    content: {
+      'application/json': { example: errWrap(404, 'User not found') },
+    },
+  })
   inviteUser(
     @Req() req: AuthRequest,
     @Param('id', ParseIntPipe) id: number,
@@ -174,12 +366,33 @@ export class ServerController {
       'Transfers server ownership to another member. Requires owner role.',
   })
   @ApiParam({ name: 'id', description: 'Server ID' })
-  @ApiResponse({ status: 200, description: 'Ownership transferred.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Owner role required.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Ownership transferred.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', { success: true }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Owner role required.',
+    content: { 'application/json': { example: errWrap(403, 'Forbidden') } },
+  })
   @ApiResponse({
     status: 404,
     description: 'Target user is not a member.',
+    content: {
+      'application/json': {
+        example: errWrap(404, 'Target user is not a member'),
+      },
+    },
   })
   transferOwnership(
     @Req() req: AuthRequest,
@@ -197,9 +410,25 @@ export class ServerController {
       'Returns all members of a server with their roles. Requires membership.',
   })
   @ApiParam({ name: 'id', description: 'Server ID' })
-  @ApiResponse({ status: 200, description: 'List of members.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Not a member of this server.' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of members.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', [EXAMPLE_MEMBER]),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Not a member of this server.',
+    content: { 'application/json': { example: errWrap(403, 'Forbidden') } },
+  })
   getMembers(@Req() req: AuthRequest, @Param('id', ParseIntPipe) id: number) {
     const user = this.getUser(req);
     return this.serverService.getMembers(user.sub, id);
@@ -213,10 +442,32 @@ export class ServerController {
   })
   @ApiParam({ name: 'id', description: 'Server ID' })
   @ApiParam({ name: 'userId', description: 'Target user ID' })
-  @ApiResponse({ status: 200, description: 'Role updated.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Admin role required.' })
-  @ApiResponse({ status: 404, description: 'Member not found.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Role updated.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', { success: true }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Admin role required.',
+    content: { 'application/json': { example: errWrap(403, 'Forbidden') } },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Member not found.',
+    content: {
+      'application/json': { example: errWrap(404, 'Member not found') },
+    },
+  })
   updateMemberRole(
     @Req() req: AuthRequest,
     @Param('id', ParseIntPipe) id: number,
@@ -230,15 +481,36 @@ export class ServerController {
   @Delete(':id/members/:userId')
   @ApiOperation({
     summary: 'Kick a member',
-    description:
-      'Removes a member from the server. Requires admin role.',
+    description: 'Removes a member from the server. Requires admin role.',
   })
   @ApiParam({ name: 'id', description: 'Server ID' })
   @ApiParam({ name: 'userId', description: 'User ID to kick' })
-  @ApiResponse({ status: 200, description: 'Member kicked.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Admin role required.' })
-  @ApiResponse({ status: 404, description: 'Member not found.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Member kicked.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', { success: true }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Admin role required.',
+    content: { 'application/json': { example: errWrap(403, 'Forbidden') } },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Member not found.',
+    content: {
+      'application/json': { example: errWrap(404, 'Member not found') },
+    },
+  })
   kickMember(
     @Req() req: AuthRequest,
     @Param('id', ParseIntPipe) id: number,

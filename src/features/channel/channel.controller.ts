@@ -23,6 +23,21 @@ import {
 import { ChannelService } from './channel.service';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
+import {
+  swaggerErrorExample as errWrap,
+  swaggerExample as wrap,
+} from '@/core/swagger/swagger-example.helper';
+
+const EXAMPLE_CHANNEL = {
+  id: 1,
+  name: 'general',
+  type: 'message',
+  serverId: 1,
+  createdAt: '2026-03-13T10:00:00.000Z',
+  createdBy: 'john@example.com',
+  modifiedAt: '2026-03-13T10:00:00.000Z',
+  modifiedBy: 'john@example.com',
+};
 
 @ApiTags('Channels')
 @ApiBearerAuth()
@@ -43,10 +58,32 @@ export class ChannelController {
       'Creates a new channel in the specified server. Requires admin role.',
   })
   @ApiParam({ name: 'serverId', description: 'Server ID' })
-  @ApiResponse({ status: 201, description: 'Channel created.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Admin role required.' })
-  @ApiResponse({ status: 404, description: 'Server not found.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Channel created.',
+    content: {
+      'application/json': {
+        example: wrap(201, 'Created', EXAMPLE_CHANNEL),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Admin role required.',
+    content: { 'application/json': { example: errWrap(403, 'Forbidden') } },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Server not found.',
+    content: {
+      'application/json': { example: errWrap(404, 'Server not found') },
+    },
+  })
   create(
     @Req() req: AuthRequest,
     @Param('serverId', ParseIntPipe) serverId: number,
@@ -63,9 +100,25 @@ export class ChannelController {
       'Returns all channels in the specified server. Requires membership.',
   })
   @ApiParam({ name: 'serverId', description: 'Server ID' })
-  @ApiResponse({ status: 200, description: 'List of channels.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Not a member of this server.' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of channels.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', [EXAMPLE_CHANNEL]),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Not a member of this server.',
+    content: { 'application/json': { example: errWrap(403, 'Forbidden') } },
+  })
   findAll(
     @Req() req: AuthRequest,
     @Param('serverId', ParseIntPipe) serverId: number,
@@ -81,10 +134,35 @@ export class ChannelController {
   })
   @ApiParam({ name: 'serverId', description: 'Server ID' })
   @ApiParam({ name: 'id', description: 'Channel ID' })
-  @ApiResponse({ status: 200, description: 'Channel updated.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Admin role required.' })
-  @ApiResponse({ status: 404, description: 'Channel not found.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Channel updated.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', {
+          ...EXAMPLE_CHANNEL,
+          name: 'updated-channel',
+        }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Admin role required.',
+    content: { 'application/json': { example: errWrap(403, 'Forbidden') } },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Channel not found.',
+    content: {
+      'application/json': { example: errWrap(404, 'Channel not found') },
+    },
+  })
   update(
     @Req() req: AuthRequest,
     @Param('serverId', ParseIntPipe) serverId: number,
@@ -103,10 +181,32 @@ export class ChannelController {
   })
   @ApiParam({ name: 'serverId', description: 'Server ID' })
   @ApiParam({ name: 'id', description: 'Channel ID' })
-  @ApiResponse({ status: 200, description: 'Channel deleted.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Admin role required.' })
-  @ApiResponse({ status: 404, description: 'Channel not found.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Channel deleted.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', { success: true }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Admin role required.',
+    content: { 'application/json': { example: errWrap(403, 'Forbidden') } },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Channel not found.',
+    content: {
+      'application/json': { example: errWrap(404, 'Channel not found') },
+    },
+  })
   remove(
     @Req() req: AuthRequest,
     @Param('serverId', ParseIntPipe) serverId: number,

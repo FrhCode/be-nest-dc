@@ -24,6 +24,19 @@ import {
 } from '@nestjs/swagger';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { MessageService } from './message.service';
+import {
+  swaggerErrorExample as errWrap,
+  swaggerExample as wrap,
+} from '@/core/swagger/swagger-example.helper';
+
+const EXAMPLE_MESSAGE = {
+  id: 1,
+  content: 'Hello, world!',
+  channelId: 1,
+  senderId: 1,
+  createdAt: '2026-03-13T10:00:00.000Z',
+  modifiedAt: '2026-03-13T10:00:00.000Z',
+};
 
 @ApiTags('Messages')
 @ApiBearerAuth()
@@ -44,10 +57,32 @@ export class MessageController {
       'Posts a new message to the specified channel. Requires server membership.',
   })
   @ApiParam({ name: 'channelId', description: 'Channel ID' })
-  @ApiResponse({ status: 201, description: 'Message sent.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Not a member of this server.' })
-  @ApiResponse({ status: 404, description: 'Channel not found.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Message sent.',
+    content: {
+      'application/json': {
+        example: wrap(201, 'Created', EXAMPLE_MESSAGE),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Not a member of this server.',
+    content: { 'application/json': { example: errWrap(403, 'Forbidden') } },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Channel not found.',
+    content: {
+      'application/json': { example: errWrap(404, 'Channel not found') },
+    },
+  })
   create(
     @Req() req: AuthRequest,
     @Param('channelId', ParseIntPipe) channelId: number,
@@ -67,16 +102,33 @@ export class MessageController {
   @ApiQuery({
     name: 'cursor',
     required: false,
-    description: 'Message ID cursor for pagination. Returns messages after this ID.',
+    description:
+      'Message ID cursor for pagination. Returns messages after this ID.',
   })
   @ApiQuery({
     name: 'limit',
     required: false,
     description: 'Number of messages to return. Defaults to 50.',
   })
-  @ApiResponse({ status: 200, description: 'List of messages.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Not a member of this server.' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of messages.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', [EXAMPLE_MESSAGE]),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Not a member of this server.',
+    content: { 'application/json': { example: errWrap(403, 'Forbidden') } },
+  })
   findAll(
     @Req() req: AuthRequest,
     @Param('channelId', ParseIntPipe) channelId: number,
@@ -99,10 +151,38 @@ export class MessageController {
   })
   @ApiParam({ name: 'channelId', description: 'Channel ID' })
   @ApiParam({ name: 'id', description: 'Message ID' })
-  @ApiResponse({ status: 200, description: 'Message updated.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 403, description: 'Only the sender can edit.' })
-  @ApiResponse({ status: 404, description: 'Message not found.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Message updated.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', {
+          ...EXAMPLE_MESSAGE,
+          content: 'Updated message content',
+          modifiedAt: '2026-03-13T11:00:00.000Z',
+        }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Only the sender can edit.',
+    content: {
+      'application/json': { example: errWrap(403, 'Only the sender can edit') },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Message not found.',
+    content: {
+      'application/json': { example: errWrap(404, 'Message not found') },
+    },
+  })
   update(
     @Req() req: AuthRequest,
     @Param('channelId', ParseIntPipe) channelId: number,
@@ -116,18 +196,40 @@ export class MessageController {
   @Delete(':id')
   @ApiOperation({
     summary: 'Delete a message',
-    description:
-      'Deletes a message. The sender or a server admin can delete.',
+    description: 'Deletes a message. The sender or a server admin can delete.',
   })
   @ApiParam({ name: 'channelId', description: 'Channel ID' })
   @ApiParam({ name: 'id', description: 'Message ID' })
-  @ApiResponse({ status: 200, description: 'Message deleted.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Message deleted.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', { success: true }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
   @ApiResponse({
     status: 403,
     description: 'Only the sender or an admin can delete.',
+    content: {
+      'application/json': {
+        example: errWrap(403, 'Only the sender or an admin can delete'),
+      },
+    },
   })
-  @ApiResponse({ status: 404, description: 'Message not found.' })
+  @ApiResponse({
+    status: 404,
+    description: 'Message not found.',
+    content: {
+      'application/json': { example: errWrap(404, 'Message not found') },
+    },
+  })
   remove(
     @Req() req: AuthRequest,
     @Param('channelId', ParseIntPipe) channelId: number,
