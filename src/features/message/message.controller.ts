@@ -1,6 +1,10 @@
 import type { AuthRequest } from '@/auth/guards/jwt-auth.guard';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import {
+  swaggerErrorExample as errWrap,
+  swaggerExample as wrap,
+} from '@/core/swagger/swagger-example.helper';
+import {
   Body,
   Controller,
   Delete,
@@ -24,10 +28,6 @@ import {
 } from '@nestjs/swagger';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { MessageService } from './message.service';
-import {
-  swaggerErrorExample as errWrap,
-  swaggerExample as wrap,
-} from '@/core/swagger/swagger-example.helper';
 
 const EXAMPLE_MESSAGE = {
   id: 1,
@@ -63,6 +63,21 @@ export class MessageController {
     content: {
       'application/json': {
         example: wrap(201, 'Created', EXAMPLE_MESSAGE),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+    content: {
+      'application/json': {
+        example: errWrap(400, 'Bad Request', [
+          {
+            code: 'too_small',
+            message: 'String must contain at least 1 character(s)',
+            path: ['content'],
+          },
+        ]),
       },
     },
   })
@@ -161,6 +176,21 @@ export class MessageController {
           content: 'Updated message content',
           modifiedAt: '2026-03-13T11:00:00.000Z',
         }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+    content: {
+      'application/json': {
+        example: errWrap(400, 'Bad Request', [
+          {
+            code: 'too_small',
+            message: 'String must contain at least 1 character(s)',
+            path: ['content'],
+          },
+        ]),
       },
     },
   })

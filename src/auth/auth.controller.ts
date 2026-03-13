@@ -1,4 +1,8 @@
 import {
+  swaggerErrorExample as errorExample,
+  swaggerExample as wrapExample,
+} from '@/core/swagger/swagger-example.helper';
+import {
   Body,
   Controller,
   Get,
@@ -20,10 +24,6 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
 import type { AuthRequest } from './guards/jwt-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import {
-  swaggerErrorExample as errorExample,
-  swaggerExample as wrapExample,
-} from '@/core/swagger/swagger-example.helper';
 
 const EXAMPLE_USER = {
   id: 1,
@@ -108,6 +108,21 @@ export class AuthController {
     },
   })
   @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+    content: {
+      'application/json': {
+        example: errorExample(400, 'Bad Request', [
+          {
+            code: 'too_small',
+            message: 'String must contain at least 8 character(s)',
+            path: ['password'],
+          },
+        ]),
+      },
+    },
+  })
+  @ApiResponse({
     status: 401,
     description: 'Invalid email or password.',
     content: {
@@ -133,6 +148,21 @@ export class AuthController {
     content: {
       'application/json': {
         example: wrapExample(200, 'OK', EXAMPLE_TOKENS),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+    content: {
+      'application/json': {
+        example: errorExample(400, 'Bad Request', [
+          {
+            code: 'too_small',
+            message: 'String must contain at least 1 character(s)',
+            path: ['refreshToken'],
+          },
+        ]),
       },
     },
   })

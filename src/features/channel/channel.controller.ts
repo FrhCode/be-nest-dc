@@ -1,6 +1,10 @@
 import type { AuthRequest } from '@/auth/guards/jwt-auth.guard';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import {
+  swaggerErrorExample as errWrap,
+  swaggerExample as wrap,
+} from '@/core/swagger/swagger-example.helper';
+import {
   Body,
   Controller,
   Delete,
@@ -23,10 +27,6 @@ import {
 import { ChannelService } from './channel.service';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
-import {
-  swaggerErrorExample as errWrap,
-  swaggerExample as wrap,
-} from '@/core/swagger/swagger-example.helper';
 
 const EXAMPLE_CHANNEL = {
   id: 1,
@@ -64,6 +64,21 @@ export class ChannelController {
     content: {
       'application/json': {
         example: wrap(201, 'Created', EXAMPLE_CHANNEL),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+    content: {
+      'application/json': {
+        example: errWrap(400, 'Bad Request', [
+          {
+            code: 'invalid_enum_value',
+            message: "Invalid enum value. Expected 'video' | 'mic' | 'message'",
+            path: ['type'],
+          },
+        ]),
       },
     },
   })
@@ -143,6 +158,21 @@ export class ChannelController {
           ...EXAMPLE_CHANNEL,
           name: 'updated-channel',
         }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+    content: {
+      'application/json': {
+        example: errWrap(400, 'Bad Request', [
+          {
+            code: 'too_small',
+            message: 'String must contain at least 1 character(s)',
+            path: ['name'],
+          },
+        ]),
       },
     },
   })

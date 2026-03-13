@@ -1,5 +1,9 @@
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import type { AuthRequest } from '@/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+import {
+  swaggerErrorExample as errWrap,
+  swaggerExample as wrap,
+} from '@/core/swagger/swagger-example.helper';
 import {
   Body,
   Controller,
@@ -27,10 +31,6 @@ import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 import { UpdateServerDto } from './dto/update-server.dto';
 import { ServerService } from './server.service';
-import {
-  swaggerErrorExample as errWrap,
-  swaggerExample as wrap,
-} from '@/core/swagger/swagger-example.helper';
 
 const EXAMPLE_SERVER = {
   id: 1,
@@ -87,6 +87,21 @@ export class ServerController {
     content: {
       'application/json': {
         example: wrap(201, 'Created', EXAMPLE_SERVER),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+    content: {
+      'application/json': {
+        example: errWrap(400, 'Bad Request', [
+          {
+            code: 'too_small',
+            message: 'String must contain at least 1 character(s)',
+            path: ['name'],
+          },
+        ]),
       },
     },
   })
@@ -181,6 +196,17 @@ export class ServerController {
     },
   })
   @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+    content: {
+      'application/json': {
+        example: errWrap(400, 'Bad Request', [
+          { code: 'invalid_string', message: 'Invalid url', path: ['iconUrl'] },
+        ]),
+      },
+    },
+  })
+  @ApiResponse({
     status: 401,
     description: 'Unauthorized.',
     content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
@@ -254,6 +280,21 @@ export class ServerController {
     content: {
       'application/json': {
         example: wrap(201, 'Created', { success: true, serverId: 1 }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+    content: {
+      'application/json': {
+        example: errWrap(400, 'Bad Request', [
+          {
+            code: 'too_small',
+            message: 'String must contain at least 1 character(s)',
+            path: ['inviteCode'],
+          },
+        ]),
       },
     },
   })
@@ -334,6 +375,21 @@ export class ServerController {
     },
   })
   @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+    content: {
+      'application/json': {
+        example: errWrap(400, 'Bad Request', [
+          {
+            code: 'invalid_type',
+            message: 'Expected number, received string',
+            path: ['userId'],
+          },
+        ]),
+      },
+    },
+  })
+  @ApiResponse({
     status: 401,
     description: 'Unauthorized.',
     content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
@@ -372,6 +428,21 @@ export class ServerController {
     content: {
       'application/json': {
         example: wrap(200, 'OK', { success: true }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+    content: {
+      'application/json': {
+        example: errWrap(400, 'Bad Request', [
+          {
+            code: 'invalid_type',
+            message: 'Expected number, received string',
+            path: ['userId'],
+          },
+        ]),
       },
     },
   })
@@ -448,6 +519,21 @@ export class ServerController {
     content: {
       'application/json': {
         example: wrap(200, 'OK', { success: true }),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+    content: {
+      'application/json': {
+        example: errWrap(400, 'Bad Request', [
+          {
+            code: 'invalid_enum_value',
+            message: "Invalid enum value. Expected 'admin' | 'member'",
+            path: ['role'],
+          },
+        ]),
       },
     },
   })
