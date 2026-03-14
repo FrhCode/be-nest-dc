@@ -3,3 +3,8 @@ export { servers } from './servers';
 export { channelTypeEnum, channels } from './channels';
 export { serverRoleEnum, serverMembers } from './server-members';
 export { messages } from './messages';
+export { friendshipStatusEnum, friendships } from './friendships';
+export { blocks } from './blocks';
+export { dmConversations } from './dm-conversations';
+export { directMessages } from './direct-messages';
+export { dmReactions } from './dm-reactions';

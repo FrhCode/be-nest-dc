@@ -15,6 +15,13 @@
       "when": 1772980854337,
       "tag": "0001_nervous_maestro",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773526069516,
+      "tag": "0002_ambiguous_strong_guy",
+      "breakpoints": true
     }
   ]
 }

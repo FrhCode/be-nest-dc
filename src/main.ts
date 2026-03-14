@@ -25,13 +25,19 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, cleanupOpenApiDoc(documentFactory()));
 
-  app.use(helmet());
-
-  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads/' });
-  app.useStaticAssets(join(process.cwd(), 'uploads', 'temp'), { prefix: '/uploads/temp/' });
-
   app.enableCors({
     origin: 'http://localhost:3000',
+  });
+
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
+
+  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads/' });
+  app.useStaticAssets(join(process.cwd(), 'uploads', 'temp'), {
+    prefix: '/uploads/temp/',
   });
 
   const port = process.env.PORT ?? 3000;
