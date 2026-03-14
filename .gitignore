@@ -57,6 +57,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 /postgres_data
 /redis_data
+/uploads
 
 # Claude Code
 .claude/settings.local.json
