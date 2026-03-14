@@ -1,6 +1,7 @@
 import { ServerPolicy } from '@/features/common/policies/server.policy';
+import { UploadService } from '@/features/upload/upload.service';
 import { DrizzleService } from '@/core/orm/drizzle.service';
-import { channels, serverMembers, servers } from '@/db';
+import { channels, serverMembers, servers, users } from '@/db';
 import {
   BadRequestException,
   Injectable,
@@ -16,16 +17,22 @@ export class ServerService {
   constructor(
     private readonly drizzleService: DrizzleService,
     private readonly serverPolicy: ServerPolicy,
+    private readonly uploadService: UploadService,
   ) {}
 
   async create(userId: number, email: string, dto: CreateServerDto) {
     const inviteCode = randomBytes(10).toString('hex').slice(0, 20);
 
+    let iconUrl = dto.iconUrl;
+    if (iconUrl && this.uploadService.isTempUrl(iconUrl)) {
+      iconUrl = await this.uploadService.promoteFile(iconUrl);
+    }
+
     const [server] = await this.drizzleService.db
       .insert(servers)
       .values({
         name: dto.name,
-        icon_url: dto.iconUrl,
+        icon_url: iconUrl,
         invite_code: inviteCode,
         owner_id: userId,
         created_by: email,
@@ -89,11 +96,31 @@ export class ServerService {
   ) {
     await this.serverPolicy.assertAdmin(userId, serverId);
 
+    let newIconUrl = dto.iconUrl;
+
+    if (newIconUrl !== undefined) {
+      // Fetch current icon to delete it after replacement
+      const [current] = await this.drizzleService.db
+        .select({ icon_url: servers.icon_url })
+        .from(servers)
+        .where(eq(servers.id, serverId))
+        .limit(1);
+
+      if (newIconUrl && this.uploadService.isTempUrl(newIconUrl)) {
+        newIconUrl = await this.uploadService.promoteFile(newIconUrl);
+      }
+
+      // Delete old icon if it was a locally-stored file
+      if (current?.icon_url?.startsWith('/uploads/')) {
+        await this.uploadService.deleteFile(current.icon_url);
+      }
+    }
+
     const [server] = await this.drizzleService.db
       .update(servers)
       .set({
         ...(dto.name && { name: dto.name }),
-        ...(dto.iconUrl !== undefined && { icon_url: dto.iconUrl }),
+        ...(newIconUrl !== undefined && { icon_url: newIconUrl }),
         modified_at: new Date(),
         modified_by: email,
       })
@@ -239,10 +266,20 @@ export class ServerService {
   async getMembers(userId: number, serverId: number) {
     await this.serverPolicy.assertMember(userId, serverId);
 
-    return this.drizzleService.db
-      .select()
+    const rows = await this.drizzleService.db
+      .select({
+        id: serverMembers.id,
+        user_id: serverMembers.user_id,
+        server_id: serverMembers.server_id,
+        role: serverMembers.role,
+        created_at: serverMembers.created_at,
+        username: users.name,
+      })
       .from(serverMembers)
+      .innerJoin(users, eq(users.id, serverMembers.user_id))
       .where(eq(serverMembers.server_id, serverId));
+
+    return rows;
   }
 
   async updateMemberRole(

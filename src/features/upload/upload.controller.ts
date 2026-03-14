@@ -38,7 +38,7 @@ export class UploadController {
   @ApiOperation({
     summary: 'Upload an image',
     description:
-      'Uploads an image file (jpeg, png, gif, webp) and returns the URL to use in other endpoints such as server icon or user avatar. Max size: 5MB.',
+      'Uploads an image file (jpeg, png, gif, webp) to a temporary location and returns the URL. Pass this URL to other endpoints (e.g. create server). The file will be promoted to permanent storage when used, or auto-deleted after 24h if unused. Max size: 2MB.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -49,25 +49,25 @@ export class UploadController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'Image file (jpeg, png, gif, webp). Max 5MB.',
+          description: 'Image file (jpeg, png, gif, webp). Max 2MB.',
         },
       },
     },
   })
   @ApiResponse({
     status: 201,
-    description: 'Image uploaded. Returns the accessible URL.',
+    description: 'Image uploaded to temp storage. Returns the temporary URL — pass it to create/update endpoints to promote it to permanent storage.',
     content: {
       'application/json': {
         example: wrap(201, 'Created', {
-          url: '/uploads/550e8400-e29b-41d4-a716-446655440000.png',
+          url: '/uploads/temp/550e8400-e29b-41d4-a716-446655440000.png',
         }),
       },
     },
   })
   @ApiResponse({
     status: 400,
-    description: 'Invalid file type or file too large.',
+    description: 'Invalid file type or file too large (max 2MB).',
     content: {
       'application/json': {
         example: errWrap(
@@ -88,7 +88,7 @@ export class UploadController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }),
           new FileTypeValidator({
             fileType: /(jpeg|png|gif|webp)/,
             fallbackToMimetype: true,

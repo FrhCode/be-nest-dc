@@ -57,10 +57,11 @@ const EXAMPLE_CHANNEL = {
 
 const EXAMPLE_MEMBER = {
   id: 1,
-  userId: 1,
-  serverId: 1,
+  user_id: 1,
+  server_id: 1,
   role: 'member',
-  createdAt: '2026-03-13T10:00:00.000Z',
+  created_at: '2026-03-13T10:00:00.000Z',
+  username: 'john_doe',
 };
 
 @ApiTags('Servers')
