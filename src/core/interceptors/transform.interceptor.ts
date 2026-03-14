@@ -83,11 +83,27 @@ export class TransformInterceptor implements NestInterceptor {
             ? (error.getZodError() as ZodError).issues
             : undefined;
 
+        let message = getMessage(statusCode);
+        if (error instanceof HttpException) {
+          const response = error.getResponse();
+          if (typeof response === 'string') {
+            message = response;
+          } else if (
+            typeof response === 'object' &&
+            response !== null &&
+            'message' in response
+          ) {
+            const msg = (response as Record<string, unknown>).message;
+            message = Array.isArray(msg) ? msg.join(', ') : String(msg);
+          }
+        }
+
         return throwError(
           () =>
             new HttpException(
               {
                 ...getBasicResponse(statusCode),
+                message,
                 data: [],
                 ...(zodIssues && { errors: zodIssues }),
               },

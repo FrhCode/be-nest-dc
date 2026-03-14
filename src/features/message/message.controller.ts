@@ -32,10 +32,11 @@ import { MessageService } from './message.service';
 const EXAMPLE_MESSAGE = {
   id: 1,
   content: 'Hello, world!',
-  channelId: 1,
-  senderId: 1,
-  createdAt: '2026-03-13T10:00:00.000Z',
-  modifiedAt: '2026-03-13T10:00:00.000Z',
+  channel_id: 1,
+  sender_id: 1,
+  sender_name: 'Alice',
+  created_at: '2026-03-13T10:00:00.000Z',
+  modified_at: '2026-03-13T10:00:00.000Z',
 };
 
 @ApiTags('Messages')
@@ -174,7 +175,7 @@ export class MessageController {
         example: wrap(200, 'OK', {
           ...EXAMPLE_MESSAGE,
           content: 'Updated message content',
-          modifiedAt: '2026-03-13T11:00:00.000Z',
+          modified_at: '2026-03-13T11:00:00.000Z',
         }),
       },
     },

@@ -1,6 +1,6 @@
 import { ServerPolicy } from '@/features/common/policies/server.policy';
 import { DrizzleService } from '@/core/orm/drizzle.service';
-import { channels, messages } from '@/db';
+import { channels, messages, users } from '@/db';
 import {
   BadRequestException,
   ForbiddenException,
@@ -63,8 +63,17 @@ export class MessageService {
     await this.serverPolicy.assertMember(userId, channel.server_id);
 
     return this.drizzleService.db
-      .select()
+      .select({
+        id: messages.id,
+        content: messages.content,
+        channel_id: messages.channel_id,
+        sender_id: messages.sender_id,
+        created_at: messages.created_at,
+        modified_at: messages.modified_at,
+        sender_name: users.name,
+      })
       .from(messages)
+      .innerJoin(users, eq(messages.sender_id, users.id))
       .where(
         cursor
           ? and(eq(messages.channel_id, channelId), lt(messages.id, cursor))
