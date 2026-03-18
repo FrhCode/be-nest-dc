@@ -32,7 +32,10 @@ export class BlockService {
       .select()
       .from(blocks)
       .where(
-        and(eq(blocks.blocker_id, blockerId), eq(blocks.blocked_id, dto.blocked_id)),
+        and(
+          eq(blocks.blocker_id, blockerId),
+          eq(blocks.blocked_id, dto.blocked_id),
+        ),
       )
       .limit(1);
 
@@ -68,7 +71,9 @@ export class BlockService {
     const [block] = await this.drizzleService.db
       .select()
       .from(blocks)
-      .where(and(eq(blocks.blocker_id, blockerId), eq(blocks.blocked_id, userId)))
+      .where(
+        and(eq(blocks.blocker_id, blockerId), eq(blocks.blocked_id, userId)),
+      )
       .limit(1);
 
     if (!block) {
@@ -77,7 +82,9 @@ export class BlockService {
 
     await this.drizzleService.db
       .delete(blocks)
-      .where(and(eq(blocks.blocker_id, blockerId), eq(blocks.blocked_id, userId)));
+      .where(
+        and(eq(blocks.blocker_id, blockerId), eq(blocks.blocked_id, userId)),
+      );
 
     return { success: true };
   }

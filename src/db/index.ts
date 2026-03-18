@@ -1,4 +1,5 @@
 export { users } from './users';
+export { files } from './files';
 export { servers } from './servers';
 export { channelTypeEnum, channels } from './channels';
 export { serverRoleEnum, serverMembers } from './server-members';
@@ -8,3 +9,4 @@ export { blocks } from './blocks';
 export { dmConversations } from './dm-conversations';
 export { directMessages } from './direct-messages';
 export { dmReactions } from './dm-reactions';
+export { dmHiddenMessages } from './dm-hidden-messages';

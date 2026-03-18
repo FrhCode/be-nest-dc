@@ -56,7 +56,8 @@ export class UploadController {
   })
   @ApiResponse({
     status: 201,
-    description: 'Image uploaded to temp storage. Returns the temporary URL — pass it to create/update endpoints to promote it to permanent storage.',
+    description:
+      'Image uploaded to temp storage. Returns the temporary URL — pass it to create/update endpoints to promote it to permanent storage.',
     content: {
       'application/json': {
         example: wrap(201, 'Created', {

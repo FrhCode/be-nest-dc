@@ -15,18 +15,20 @@ export class FriendService {
   constructor(private readonly drizzleService: DrizzleService) {}
 
   async sendRequest(requesterId: number, dto: SendFriendRequestDto) {
-    if (requesterId === dto.addressee_id) {
-      throw new BadRequestException('You cannot send a friend request to yourself');
-    }
-
     const [targetUser] = await this.drizzleService.db
       .select({ id: users.id })
       .from(users)
-      .where(eq(users.id, dto.addressee_id))
+      .where(eq(users.email, dto.email))
       .limit(1);
 
     if (!targetUser) {
       throw new NotFoundException('User not found');
+    }
+
+    if (requesterId === targetUser.id) {
+      throw new BadRequestException(
+        'You cannot send a friend request to yourself',
+      );
     }
 
     // Check blocks in either direction
@@ -35,14 +37,22 @@ export class FriendService {
       .from(blocks)
       .where(
         or(
-          and(eq(blocks.blocker_id, requesterId), eq(blocks.blocked_id, dto.addressee_id)),
-          and(eq(blocks.blocker_id, dto.addressee_id), eq(blocks.blocked_id, requesterId)),
+          and(
+            eq(blocks.blocker_id, requesterId),
+            eq(blocks.blocked_id, targetUser.id),
+          ),
+          and(
+            eq(blocks.blocker_id, targetUser.id),
+            eq(blocks.blocked_id, requesterId),
+          ),
         ),
       )
       .limit(1);
 
     if (block) {
-      throw new ForbiddenException('You cannot send a friend request to this user');
+      throw new ForbiddenException(
+        'You cannot send a friend request to this user',
+      );
     }
 
     const [existing] = await this.drizzleService.db
@@ -52,10 +62,10 @@ export class FriendService {
         or(
           and(
             eq(friendships.requester_id, requesterId),
-            eq(friendships.addressee_id, dto.addressee_id),
+            eq(friendships.addressee_id, targetUser.id),
           ),
           and(
-            eq(friendships.requester_id, dto.addressee_id),
+            eq(friendships.requester_id, targetUser.id),
             eq(friendships.addressee_id, requesterId),
           ),
         ),
@@ -71,7 +81,7 @@ export class FriendService {
 
     const [request] = await this.drizzleService.db
       .insert(friendships)
-      .values({ requester_id: requesterId, addressee_id: dto.addressee_id })
+      .values({ requester_id: requesterId, addressee_id: targetUser.id })
       .returning();
 
     return request;
@@ -81,7 +91,9 @@ export class FriendService {
     const [request] = await this.drizzleService.db
       .select()
       .from(friendships)
-      .where(and(eq(friendships.id, requestId), eq(friendships.status, 'pending')))
+      .where(
+        and(eq(friendships.id, requestId), eq(friendships.status, 'pending')),
+      )
       .limit(1);
 
     if (!request) {
@@ -105,7 +117,9 @@ export class FriendService {
     const [request] = await this.drizzleService.db
       .select()
       .from(friendships)
-      .where(and(eq(friendships.id, requestId), eq(friendships.status, 'pending')))
+      .where(
+        and(eq(friendships.id, requestId), eq(friendships.status, 'pending')),
+      )
       .limit(1);
 
     if (!request) {
@@ -127,7 +141,9 @@ export class FriendService {
     const [request] = await this.drizzleService.db
       .select()
       .from(friendships)
-      .where(and(eq(friendships.id, requestId), eq(friendships.status, 'pending')))
+      .where(
+        and(eq(friendships.id, requestId), eq(friendships.status, 'pending')),
+      )
       .limit(1);
 
     if (!request) {
@@ -135,7 +151,9 @@ export class FriendService {
     }
 
     if (request.requester_id !== userId) {
-      throw new ForbiddenException('You can only cancel your own friend requests');
+      throw new ForbiddenException(
+        'You can only cancel your own friend requests',
+      );
     }
 
     await this.drizzleService.db

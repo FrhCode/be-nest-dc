@@ -10,6 +10,7 @@ export type AuthConfig = {
   refreshSecret: string;
   refreshExpiresIn: number;
   bcryptSaltRounds: number;
+  cookieSecure: boolean;
 };
 
 export type PublicUser = {

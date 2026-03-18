@@ -5,6 +5,7 @@ import {
   swaggerExample as wrap,
 } from '@/core/swagger/swagger-example.helper';
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -36,7 +37,9 @@ import type { Response } from 'express';
 import * as multer from 'multer';
 import * as path from 'path';
 import { AddReactionDto } from './dto/add-reaction.dto';
+import { DeleteDmDto } from './dto/delete-dm.dto';
 import { EditDmDto } from './dto/edit-dm.dto';
+import { ListConversationsDto } from './dto/list-conversations.dto';
 import { OpenConversationDto } from './dto/open-conversation.dto';
 import { SendDmDto } from './dto/send-dm.dto';
 import { DmService } from './dm.service';
@@ -49,6 +52,8 @@ const ALLOWED_MIME_TYPES = [
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'text/plain',
 ];
 
@@ -68,6 +73,27 @@ const EXAMPLE_CONV = {
   partner: { id: 2, name: 'Bob' },
 };
 
+const EXAMPLE_CONV_WITH_LAST_MSG = {
+  ...EXAMPLE_CONV,
+  last_message: {
+    id: 5,
+    conversation_id: 1,
+    content: 'Hey!',
+    sender_id: 2,
+    sender_name: 'Bob',
+    attachment_url: null,
+    attachment_name: null,
+    attachment_type: null,
+    attachment_size: null,
+    reply_to_message_id: null,
+    quoted_content: null,
+    quoted_sender_name: null,
+    is_deleted: false,
+    created_at: '2026-03-15T10:00:00.000Z',
+    modified_at: '2026-03-15T10:00:00.000Z',
+  },
+};
+
 const EXAMPLE_MESSAGE = {
   id: 1,
   content: 'Hey!',
@@ -75,10 +101,17 @@ const EXAMPLE_MESSAGE = {
   sender_id: 1,
   sender_name: 'Alice',
   attachment_url: null,
+  attachment_name: null,
+  attachment_type: null,
+  attachment_size: null,
+  reply_to_message_id: null,
+  reply_preview: null,
   quoted_content: null,
   quoted_sender_name: null,
+  is_deleted: false,
   created_at: '2026-03-15T10:00:00.000Z',
   modified_at: '2026-03-15T10:00:00.000Z',
+  reactions: [{ emoji: '👍', user_id: 2, user_name: 'Bob' }],
 };
 
 const EXAMPLE_REACTION = {
@@ -99,6 +132,38 @@ export class DmController {
   private getUser(req: AuthRequest) {
     if (!req.user) throw new UnauthorizedException();
     return req.user;
+  }
+
+  @Get('users/search')
+  @ApiOperation({
+    summary: 'Search friends for DM',
+    description:
+      'Searches accepted friends by name or email. Used to find users to start or open a DM conversation with.',
+  })
+  @ApiQuery({
+    name: 'q',
+    required: true,
+    description: 'Search query (matches name or email)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of matching friends.',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', [
+          { id: 2, name: 'Bob', email: 'bob@example.com' },
+        ]),
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
+  })
+  searchFriends(@Req() req: AuthRequest, @Query('q') q: string) {
+    const user = this.getUser(req);
+    return this.dmService.searchFriends(user.sub, q ?? '');
   }
 
   @Post('conversations')
@@ -137,6 +202,13 @@ export class DmController {
       },
     },
   })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found.',
+    content: {
+      'application/json': { example: errWrap(404, 'User not found') },
+    },
+  })
   openConversation(@Req() req: AuthRequest, @Body() dto: OpenConversationDto) {
     const user = this.getUser(req);
     return this.dmService.openConversation(user.sub, dto);
@@ -146,13 +218,29 @@ export class DmController {
   @ApiOperation({
     summary: 'List DM conversations',
     description:
-      'Returns all DM conversations for the current user with partner info.',
+      'Returns all DM conversations for the current user with partner info. Pass `include_last_message=true` to include the last message in each conversation.',
+  })
+  @ApiQuery({
+    name: 'include_last_message',
+    required: false,
+    description: 'Include the last message in each conversation',
+    enum: ['true', 'false'],
   })
   @ApiResponse({
     status: 200,
-    description: 'List of conversations.',
+    description: 'List of conversations (without last message).',
     content: {
       'application/json': { example: wrap(200, 'OK', [EXAMPLE_CONV]) },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'List of conversations with last message (include_last_message=true).',
+    content: {
+      'application/json': {
+        example: wrap(200, 'OK', [EXAMPLE_CONV_WITH_LAST_MSG]),
+      },
     },
   })
   @ApiResponse({
@@ -160,9 +248,15 @@ export class DmController {
     description: 'Unauthorized.',
     content: { 'application/json': { example: errWrap(401, 'Unauthorized') } },
   })
-  listConversations(@Req() req: AuthRequest) {
+  listConversations(
+    @Req() req: AuthRequest,
+    @Query() query: ListConversationsDto,
+  ) {
     const user = this.getUser(req);
-    return this.dmService.listConversations(user.sub);
+    return this.dmService.listConversations(
+      user.sub,
+      query.include_last_message,
+    );
   }
 
   @Get('conversations/:conversationId/messages')
@@ -247,6 +341,10 @@ export class DmController {
           format: 'binary',
           description: 'File attachment (optional)',
         },
+        reply_to_message_id: {
+          type: 'integer',
+          description: 'ID of the message being replied to (optional)',
+        },
         quoted_content: {
           type: 'string',
           maxLength: 2000,
@@ -269,7 +367,7 @@ export class DmController {
   })
   @ApiResponse({
     status: 400,
-    description: 'No content or attachment.',
+    description: 'No content or attachment, or unsupported file type.',
     content: {
       'application/json': {
         example: errWrap(400, 'Message must have content or an attachment'),
@@ -305,7 +403,7 @@ export class DmController {
         if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
           cb(null, true);
         } else {
-          cb(new Error('Unsupported file type'), false);
+          cb(new BadRequestException('Unsupported file type'), false);
         }
       },
     }),
@@ -371,10 +469,24 @@ export class DmController {
   @ApiOperation({
     summary: 'Delete a DM',
     description:
-      'Deletes a DM message. Only the sender can delete. Also removes any attached file.',
+      'Deletes a DM message. Use mode "for_everyone" (sender only) to soft-delete so it shows as "This message was deleted". Use mode "for_me" to hide the message from your own view only.',
   })
   @ApiParam({ name: 'conversationId', description: 'Conversation ID' })
   @ApiParam({ name: 'messageId', description: 'Message ID' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['mode'],
+      properties: {
+        mode: {
+          type: 'string',
+          enum: ['for_me', 'for_everyone'],
+          description:
+            '"for_me" hides the message for you only. "for_everyone" soft-deletes it (sender only).',
+        },
+      },
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'Message deleted.',
@@ -389,7 +501,7 @@ export class DmController {
   })
   @ApiResponse({
     status: 403,
-    description: 'Not the sender.',
+    description: 'Not the sender (for_everyone mode).',
     content: {
       'application/json': {
         example: errWrap(403, 'You can only delete your own messages'),
@@ -407,9 +519,15 @@ export class DmController {
     @Req() req: AuthRequest,
     @Param('conversationId', ParseIntPipe) conversationId: number,
     @Param('messageId', ParseIntPipe) messageId: number,
+    @Body() dto: DeleteDmDto,
   ) {
     const user = this.getUser(req);
-    return this.dmService.deleteMessage(user.sub, conversationId, messageId);
+    return this.dmService.deleteMessage(
+      user.sub,
+      conversationId,
+      messageId,
+      dto,
+    );
   }
 
   @Post('conversations/:conversationId/messages/:messageId/reactions')

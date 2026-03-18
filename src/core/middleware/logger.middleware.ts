@@ -37,7 +37,7 @@ export class LoggerMiddleware implements NestMiddleware {
       const logMessage = `[${requestId}] ${req.method} ${req.originalUrl} - ${statusCode} - ${duration}ms`;
 
       if (statusCode >= 500) {
-        this.logger.error(logMessage, 'HTTP');
+        this.logger.warn(logMessage, 'HTTP');
       } else if (statusCode >= 400) {
         this.logger.warn(logMessage, 'HTTP');
       } else {

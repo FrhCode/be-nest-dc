@@ -11,10 +11,14 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ZodError } from 'zod';
 import { AsyncStorageService } from '../async-storage.service';
+import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
 export class TransformInterceptor implements NestInterceptor {
-  constructor(private readonly asyncStorage: AsyncStorageService) {}
+  constructor(
+    private readonly asyncStorage: AsyncStorageService,
+    private readonly logger: LoggerService,
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const ctx = context.switchToHttp();
@@ -77,6 +81,22 @@ export class TransformInterceptor implements NestInterceptor {
       catchError((error: unknown) => {
         const statusCode =
           error instanceof HttpException ? error.getStatus() : 500;
+
+        if (!(error instanceof HttpException)) {
+          const requestId = this.asyncStorage.get<string>('requestId') || 'N/A';
+          const stack = error instanceof Error ? error.stack : String(error);
+          const message =
+            error instanceof Error ? error.message : String(error);
+          const cause =
+            error instanceof Error && error.cause != null
+              ? `\nCause: ${error.cause instanceof Error ? error.cause.stack : JSON.stringify(error.cause, null, 2)}`
+              : '';
+          this.logger.error(
+            `[${requestId}] Unhandled error: ${message}${cause}`,
+            stack ?? '',
+            'TransformInterceptor',
+          );
+        }
 
         const zodIssues =
           error instanceof ZodValidationException

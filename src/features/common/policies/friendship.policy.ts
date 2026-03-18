@@ -29,7 +29,9 @@ export class FriendshipPolicy {
       .limit(1);
 
     if (!friendship) {
-      throw new ForbiddenException('You must be friends to perform this action');
+      throw new ForbiddenException(
+        'You must be friends to perform this action',
+      );
     }
   }
 

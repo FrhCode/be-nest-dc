@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { cleanupOpenApiDoc } from 'nestjs-zod';
 import { join } from 'path';
@@ -14,19 +15,22 @@ async function bootstrap() {
 
   app.useLogger(app.get(LoggerService));
 
+  app.use(cookieParser());
+
   const config = new DocumentBuilder()
     .setTitle('Discord Clone API')
     .setDescription(
       'REST API for a Discord-like chat platform with servers, channels, and messages',
     )
     .setVersion('1.0')
-    .addBearerAuth()
+    .addCookieAuth('access_token')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, cleanupOpenApiDoc(documentFactory()));
 
   app.enableCors({
     origin: 'http://localhost:3000',
+    credentials: true,
   });
 
   app.use(
